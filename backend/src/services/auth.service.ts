@@ -1,7 +1,6 @@
 import bcrypt from "bcrypt";
-import type { Request } from "express";
 import { AppError } from "../errors/AppError.js";
-import { generateAccessTokens } from "../lib/jwt.js";
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../lib/jwt.js";
 import { prisma } from "../lib/prisma.js";
 import type { loginSchema, SignupBody } from "../schema/auth.schema.js";
 import generateHandle from "../utils/generateHandle.js";
@@ -42,36 +41,56 @@ async function registerUser(data: SignupBody) {
   });
 
   //generate jwt
-  const accessToken = generateAccessTokens(user.id);
+  const accessToken = generateAccessToken(user.id);
+  const refreshToken = generateRefreshToken(user.id);
 
-  return { accessToken, user };
+  return { user, accessToken, refreshToken };
 }
 
-async function loginUser(data: loginSchema){
-  const {email, password} = data;
+async function loginUser(data: loginSchema) {
+  const { email, password } = data;
 
   //check if the email exists
   const user = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+    select: {
+      id: true,
+      password: true,
+    },
+  });
+
+  if (!user) throw new AppError(401, "Email doesn't exist");
+
+  //verify password
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordValid) throw new AppError(401, "Incorrect Password");
+
+  //create jwt
+  const accessToken = generateAccessToken(user.id);
+  const refreshToken = generateRefreshToken(user.id);
+
+  return { user, accessToken, refreshToken };
+}
+
+async function refreshAccessToken(refreshToken: string):Promise<string>{
+  const userId = verifyRefreshToken(refreshToken);
+
+  //check if user still exists
+  const user = await prisma.user.findUnique({
     where:{
-      email
+      id: userId
     },
     select:{
-      id: true,
-      password: true
+      id: true
     }
   });
 
-  if(!user) throw new AppError(401, "Email doesn't exist");
+  if(!user) throw new AppError(401, "Invalid refresh token")
 
-  //verify password
-  const isPasswordValid = await bcrypt.compare(password,user.password);
+  return generateAccessToken(user.id);
 
-  if(!isPasswordValid) throw new AppError(401, "Incorrect Password");
-
-  //create jwt
-  const accessToken = generateAccessTokens(user.id);
-
-  return {user, accessToken}
 }
-
-export { registerUser, loginUser };
+export { loginUser, registerUser, refreshAccessToken };
