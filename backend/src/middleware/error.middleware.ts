@@ -1,5 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { AppError } from "../errors/AppError.js";
+import { ZodError } from "zod";
+import * as z from "zod"
 
 export function handleError(err: unknown, _req: Request, res: Response, _next: NextFunction){
     console.error(err);
@@ -9,6 +11,14 @@ export function handleError(err: unknown, _req: Request, res: Response, _next: N
             success: false,
             message: err.message
         })
+    }
+
+    if(err instanceof ZodError){
+      res.status(400).json({
+        success: false,
+        message: "Validation Failed",
+        errors: err.issues
+      })
     }
 
     if(err instanceof Error){

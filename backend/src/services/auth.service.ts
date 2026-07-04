@@ -3,7 +3,7 @@ import type { Request } from "express";
 import { AppError } from "../errors/AppError.js";
 import { generateAccessTokens } from "../lib/jwt.js";
 import { prisma } from "../lib/prisma.js";
-import type { SignupBody } from "../schema/auth.schema.js";
+import type { loginSchema, SignupBody } from "../schema/auth.schema.js";
 import generateHandle from "../utils/generateHandle.js";
 
 async function registerUser(data: SignupBody) {
@@ -47,4 +47,31 @@ async function registerUser(data: SignupBody) {
   return { accessToken, user };
 }
 
-export { registerUser };
+async function loginUser(data: loginSchema){
+  const {email, password} = data;
+
+  //check if the email exists
+  const user = await prisma.user.findUnique({
+    where:{
+      email
+    },
+    select:{
+      id: true,
+      password: true
+    }
+  });
+
+  if(!user) throw new AppError(401, "Email doesn't exist");
+
+  //verify password
+  const isPasswordValid = await bcrypt.compare(password,user.password);
+
+  if(!isPasswordValid) throw new AppError(401, "Incorrect Password");
+
+  //create jwt
+  const accessToken = generateAccessTokens(user.id);
+
+  return {user, accessToken}
+}
+
+export { registerUser, loginUser };
