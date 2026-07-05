@@ -1,6 +1,10 @@
 import bcrypt from "bcrypt";
 import { AppError } from "../errors/AppError.js";
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../lib/jwt.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "../lib/jwt.js";
 import { prisma } from "../lib/prisma.js";
 import type { loginSchema, SignupBody } from "../schema/auth.schema.js";
 import generateHandle from "../utils/generateHandle.js";
@@ -75,22 +79,44 @@ async function loginUser(data: loginSchema) {
   return { user, accessToken, refreshToken };
 }
 
-async function refreshAccessToken(refreshToken: string):Promise<string>{
+async function refreshAccessToken(refreshToken: string): Promise<string> {
   const userId = verifyRefreshToken(refreshToken);
 
   //check if user still exists
   const user = await prisma.user.findUnique({
-    where:{
-      id: userId
+    where: {
+      id: userId,
     },
-    select:{
-      id: true
-    }
+    select: {
+      id: true,
+    },
   });
 
-  if(!user) throw new AppError(401, "Invalid refresh token")
+  if (!user) throw new AppError(401, "Invalid refresh token");
 
   return generateAccessToken(user.id);
-
 }
-export { loginUser, registerUser, refreshAccessToken };
+
+async function getUserInfo(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      id: true,
+      username: true,
+      handle: true,
+      email: true,
+      avatar: true,
+      bio: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  if (!user) throw new AppError(404, "User not found");
+
+  return user;
+}
+
+export { getUserInfo, loginUser, refreshAccessToken, registerUser };

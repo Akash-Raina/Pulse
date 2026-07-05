@@ -52,3 +52,14 @@ export const refresh = asyncHandler(async(req: Request, res: Response) =>{
   })
 
 })
+
+export const me = asyncHandler(async(req: Request,res: Response) =>{
+  const userId = req.user.id;
+  const user = await authService.getUserInfo(userId);
+
+  res.status(200).json({
+    success: true,
+    message: "User info found",
+    user
+  })
+})

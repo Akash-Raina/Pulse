@@ -7,26 +7,33 @@ interface JwtPayload{
 
 dotenv.config();
 
-export function generateAccessToken(userId: string): string {
-  const secret = process.env.JWT_ACCESS_SECRET!;
+const accessSecret = process.env.JWT_ACCESS_SECRET!;
+const refreshSecret = process.env.JWT_REFRESH_SECRET!;
 
-  const accessToken = jwt.sign({ userId }, secret, { expiresIn: "15m" });
+export function generateAccessToken(userId: string): string {
+
+  const accessToken = jwt.sign({ userId }, accessSecret, { expiresIn: "15m" });
 
   return accessToken;
 }
 
 export function generateRefreshToken(userId: string): string {
-  const secret = process.env.JWT_REFRESH_SECRET!;
 
-  const refreshToken = jwt.sign({ userId }, secret, { expiresIn: "30d" });
+  const refreshToken = jwt.sign({ userId }, refreshSecret, { expiresIn: "30d" });
 
   return refreshToken;
 }
 
 export function verifyRefreshToken(refreshToken: string){
-  const secret = process.env.JWT_REFRESH_SECRET!;
 
-  const payload = jwt.verify(refreshToken, secret) as JwtPayload;
+  const payload = jwt.verify(refreshToken, refreshSecret) as JwtPayload;
 
-  return payload.userId
+  return payload.userId;
+}
+
+export function verifyAccessToken(accessToken: string){
+
+  const payload = jwt.verify(accessToken, accessSecret) as JwtPayload;
+
+  return payload.userId;
 }
