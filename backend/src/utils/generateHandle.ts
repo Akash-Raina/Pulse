@@ -1,4 +1,4 @@
-import randomNumber from "./randomForHandle.js";
+import randomNumber from "./randomNumbers.js";
 import { prisma } from "../lib/prisma.js";
 
 export default async function generateHandle(username: string): Promise<string> {
