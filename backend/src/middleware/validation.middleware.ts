@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { loginSchema, signupSchema } from "../schema/auth.schema.js";
-import { serverSchema } from "../schema/server.schema.js";
+import { editServerSchema, serverSchema } from "../schema/server.schema.js";
+import { AppError } from "../errors/AppError.js";
 
 function validateUserSignUp(req: Request, _res: Response, next: NextFunction) {
   const result = signupSchema.safeParse(req.body);
@@ -33,4 +34,12 @@ function validateServerSchema(
   next();
 }
 
-export { validateServerSchema, validateUserLogin, validateUserSignUp };
+function validateEditServerSchema(req: Request, _res: Response, next: NextFunction){
+  const result = editServerSchema.safeParse(req.body);
+
+  if(!result.success) return next(result.error);
+
+  req.body = result.data;
+  next();
+}
+export { validateServerSchema, validateUserLogin, validateUserSignUp, validateEditServerSchema};

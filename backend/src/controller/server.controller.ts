@@ -24,3 +24,18 @@ export const getServers = asyncHandler(async (req: Request, res: Response) => {
     servers,
   });
 });
+
+export const editServer = asyncHandler(async (req: Request, res: Response) => {
+  const serverId = req.params.serverId as string;
+
+  const updatedServer = await serverService.editServer({
+    serverId,
+    userId: req.user.id,
+    ...req.body,
+  });
+
+  return res.status(201).json({
+    message: "Server Setting updated successfully",
+    updatedServer,
+  });
+});

@@ -1,4 +1,6 @@
+import { AppError } from "../errors/AppError.js";
 import { prisma } from "../lib/prisma.js";
+import type { EditServerInput } from "../types/server.types.js";
 
 export async function createServer(name: string, userId: string) {
   return prisma.$transaction(async (tx) => {
@@ -37,6 +39,7 @@ export async function getServers(userId: string) {
     include: {
       server: {
         select: {
+          id: true,
           name: true,
           icon: true,
           ownerId: true,
@@ -48,4 +51,34 @@ export async function getServers(userId: string) {
   const servers = memberShips.map((member) => member.server);
 
   return servers;
+}
+
+export async function editServer(data: EditServerInput) {
+  const { serverId, userId, name, icon } = data;
+
+  const server = await prisma.server.findUnique({
+    where: {
+      id: serverId,
+    },
+    select: {
+      ownerId: true,
+    },
+  });
+
+  if (!server) throw new AppError(404, "Server not found");
+
+  if (server?.ownerId !== userId)
+    throw new AppError(403, "Only server owner can edit the server");
+
+  const updatedServer = await prisma.server.update({
+    where: {
+      id: serverId,
+    },
+    data: {
+      name,
+      icon
+    }
+  });
+
+  return updatedServer;
 }
