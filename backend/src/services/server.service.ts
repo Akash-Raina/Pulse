@@ -76,9 +76,30 @@ export async function editServer(data: EditServerInput) {
     },
     data: {
       name,
-      icon
-    }
+      icon,
+    },
   });
 
   return updatedServer;
+}
+
+export async function deleteServer(serverId: string, userId: string) {
+  const server = await prisma.server.findUnique({
+    where: {
+      id: serverId,
+    },
+    select: {
+      ownerId: true,
+    },
+  });
+  if (!server) throw new AppError(404, "Server not found");
+
+  if (server.ownerId !== userId)
+    throw new AppError(403, "Only the server owner can delete the server");
+
+  await prisma.server.delete({
+    where: {
+      id: serverId,
+    },
+  });
 }

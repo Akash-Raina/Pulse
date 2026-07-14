@@ -20,6 +20,7 @@ export const getServers = asyncHandler(async (req: Request, res: Response) => {
   const servers = await serverService.getServers(req.user.id);
 
   res.status(200).json({
+    success: true,
     message: "Servers returned successfully",
     servers,
   });
@@ -35,7 +36,19 @@ export const editServer = asyncHandler(async (req: Request, res: Response) => {
   });
 
   return res.status(201).json({
+    success: true,
     message: "Server Setting updated successfully",
     updatedServer,
   });
 });
+
+export const deleteServer = asyncHandler(
+  async (req: Request, res: Response) => {
+    const serverId = req.params.serverId as string;
+    await serverService.deleteServer(serverId, req.user.id);
+    res.status(200).json({
+      success: true,
+      message: "Server deleted successfully",
+    });
+  },
+);

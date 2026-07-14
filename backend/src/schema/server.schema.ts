@@ -10,6 +10,10 @@ export const editServerSchema = z.object({
   icon: z.url().optional()
 });
 
+export const serverParamsSchema = z.object({
+  serverId: z.uuid()
+})
+
 
 export type createServerSchema = z.infer<typeof serverSchema>;
 export type editServerSchema = z.infer<typeof editServerSchema>;
