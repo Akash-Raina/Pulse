@@ -28,3 +28,24 @@ export async function createServer(name: string, userId: string) {
     return server;
   });
 }
+
+export async function getServers(userId: string) {
+  const memberShips = await prisma.member.findMany({
+    where: {
+      userId,
+    },
+    include: {
+      server: {
+        select: {
+          name: true,
+          icon: true,
+          ownerId: true,
+        },
+      },
+    },
+  });
+
+  const servers = memberShips.map((member) => member.server);
+
+  return servers;
+}
