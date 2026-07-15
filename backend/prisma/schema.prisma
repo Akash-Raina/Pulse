@@ -14,6 +14,10 @@ enum MemberRole {
   MEMBER
 }
 
+enum ChannelType {
+  TEXT
+  VOICE
+}
 model User {
   id        String   @id @default(uuid())
 
@@ -29,7 +33,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  ownedServers Server[] @relation("ServerOwner")
+  ownedServers Server[]
   memberships  Member[]
 }
 
@@ -40,9 +44,10 @@ model Server {
   icon      String?
 
   ownerId   String
-  owner     User     @relation("ServerOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  owner     User     @relation( fields: [ownerId], references: [id], onDelete: Cascade)
 
   members   Member[]
+  channels  Channel[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -62,4 +67,25 @@ model Member {
   joinedAt  DateTime    @default(now())
 
   @@unique([userId, serverId])
+}
+
+model Channel {
+  id          String       @id @default(uuid())
+
+  name        String
+  type        ChannelType  @default(TEXT)
+
+  icon        String?
+
+  creatorId   String
+
+  serverId    String
+  server      Server       @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  minimumRole MemberRole   @default(MEMBER)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([serverId, name])
 }

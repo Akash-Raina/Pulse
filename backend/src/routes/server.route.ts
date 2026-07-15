@@ -9,4 +9,5 @@ router.post('/createserver', authMiddleware, validateServerSchema, createServer)
 router.get('/servers', authMiddleware, getServers);
 router.patch('/:serverId', authMiddleware, validateServerParams, validateEditServer, editServer);
 router.delete('/:serverId', authMiddleware, validateServerParams, deleteServer);
+
 export default router
