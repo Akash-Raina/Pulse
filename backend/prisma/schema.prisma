@@ -7,7 +7,7 @@ datasource db {
   provider = "postgresql"
 }
 
-enum MemberRole {
+ enum MemberRole {
   OWNER
   ADMIN
   MODERATOR
