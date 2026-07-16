@@ -1,8 +1,9 @@
 import express from "express";
-import { createChannel, getChannel, getChannels } from "../controller/channel.controller.js";
+import { createChannel, editChannel, getChannel, getChannels } from "../controller/channel.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import {
   validateChannelSchema,
+  validateEditChannel,
   validateParams,
 } from "../middleware/validation.middleware.js";
 import { channelParamsSchema, serverParamsSchema } from "../schema/params.schema.js";
@@ -31,9 +32,13 @@ router.get(
   getChannel
 );
 
-// router.patch(
-//   "/channels/:channelId"
-// );
+router.patch(
+  "/channels/:channelId",
+  authMiddleware,
+  validateParams(channelParamsSchema),
+  validateEditChannel,
+  editChannel
+);
 
 // router.delete(
 //   "/channels/:channelId"

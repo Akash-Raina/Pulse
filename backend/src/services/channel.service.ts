@@ -1,7 +1,11 @@
 import { ROLE_RANKING } from "../constants/member-role.js";
 import { AppError } from "../errors/AppError.js";
+import type { Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
-import type { createChannelInput } from "../types/channel.types.js";
+import type {
+  createChannelInput,
+  editChannelInput,
+} from "../types/channel.types.js";
 import { ensureServerAccess } from "./permission.service.js";
 
 export async function createChannel(data: createChannelInput) {
@@ -87,4 +91,93 @@ export async function getChannel(channelId: string, userId: string) {
     throw new AppError(403, "You don't have access of this channel");
 
   return channel;
+}
+
+export async function editChannel(data: editChannelInput) {
+  const { channelId, userId, userInput } = data;
+
+  // Find channel
+  const channel = await prisma.channel.findUnique({
+    where: {
+      id: channelId,
+    },
+    select: {
+      id: true,
+      serverId: true,
+      name: true,
+      icon: true,
+      minimumRole: true,
+    },
+  });
+
+  if (!channel) {
+    throw new AppError(404, "Channel not found");
+  }
+
+  // Authorization
+  const member = await ensureServerAccess(userId, channel.serverId);
+
+  if (ROLE_RANKING[member.role] < ROLE_RANKING.MODERATOR) {
+    throw new AppError(403, "You don't have permission to edit this channel.");
+  }
+
+  // Duplicate name check
+  if (userInput.name !== undefined && userInput.name !== channel.name) {
+    const existingChannel = await prisma.channel.findFirst({
+      where: {
+        serverId: channel.serverId,
+        name: userInput.name,
+        NOT: {
+          id: channelId,
+        },
+      },
+    });
+
+    if (existingChannel) {
+      throw new AppError(409, "A channel with this name already exists.");
+    }
+  }
+
+  // Build update payload
+  const updateData: Prisma.ChannelUpdateInput = {};
+
+  if (userInput.name !== undefined && userInput.name !== channel.name) {
+    updateData.name = userInput.name;
+  }
+
+  if (userInput.icon !== undefined && userInput.icon !== channel.icon) {
+    updateData.icon = userInput.icon;
+  }
+
+  if (
+    userInput.minimumRole !== undefined &&
+    userInput.minimumRole !== channel.minimumRole
+  ) {
+    updateData.minimumRole = userInput.minimumRole;
+  }
+
+  // If nothing changed
+  if (Object.keys(updateData).length === 0) {
+    return channel;
+  }
+
+  // Update channel
+  const updatedChannel = await prisma.channel.update({
+    where: {
+      id: channelId,
+    },
+    data: updateData,
+    select: {
+      id: true,
+      name: true,
+      type: true,
+      icon: true,
+      minimumRole: true,
+      serverId: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return updatedChannel;
 }

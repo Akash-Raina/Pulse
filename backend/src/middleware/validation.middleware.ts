@@ -1,7 +1,7 @@
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 import { ZodObject } from "zod";
 import { loginSchema, signupSchema } from "../schema/auth.schema.js";
-import { channelSchema } from "../schema/channel.schema.js";
+import { channelSchema, editChannelSchema } from "../schema/channel.schema.js";
 import { editServerSchema, serverSchema } from "../schema/server.schema.js";
 
 function validateUserSignUp(req: Request, _res: Response, next: NextFunction) {
@@ -63,6 +63,14 @@ function validateChannelSchema(
   req.body = result.data;
   next();
 }
+
+function validateEditChannel(req: Request, _res: Response, next: NextFunction) {
+  const result = editChannelSchema.safeParse(req.body);
+  if (!result.success) return next(result.error);
+
+  req.body = result.data;
+  next();
+}
 export {
   validateChannelSchema,
   validateEditServer,
@@ -70,4 +78,5 @@ export {
   validateServerSchema,
   validateUserLogin,
   validateUserSignUp,
+  validateEditChannel
 };
