@@ -1,14 +1,32 @@
 import type { Request, Response } from "express";
+import * as channelService from "../services/channel.service.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import * as channelService from "../services/channel.service.js"
 
-export const createChannel = asyncHandler(async (req: Request, res: Response)=>{
+export const createChannel = asyncHandler(
+  async (req: Request, res: Response) => {
+    const serverId = req.params.serverId as string;
+    const channel = await channelService.createChannel({
+      serverId,
+      userInput: req.body,
+      userId: req.user.id,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Channel created successfully",
+      channel,
+    });
+  },
+);
+
+export const getChannels = asyncHandler(async (req: Request, res: Response) => {
   const serverId = req.params.serverId as string;
-  const channel = await channelService.createChannel({serverId, userInput: req.body, userId: req.user.id});
 
-  res.status(201).json({
+  const channels = await channelService.getChannels(serverId, req.user.id);
+
+  res.status(200).json({
     success: true,
-    message: "Channel created successfully",
-    channel
-  })
-})
+    message: "Channel exported successfully",
+    channels,
+  });
+});

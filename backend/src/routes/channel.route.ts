@@ -1,5 +1,5 @@
 import express from "express";
-import { createChannel } from "../controller/channel.controller.js";
+import { createChannel, getChannels } from "../controller/channel.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import {
   validateChannelSchema,
@@ -15,5 +15,24 @@ router.post(
   validateChannelSchema,
   createChannel,
 );
+
+router.get(
+  "/:serverId/channels",
+  authMiddleware,
+  validateServerParams,
+  getChannels
+);
+
+// router.get(
+//   "/channels/:channelId"
+// );
+
+// router.patch(
+//   "/channels/:channelId"
+// );
+
+// router.delete(
+//   "/channels/:channelId"
+// )
 
 export default router;

@@ -1,34 +1,16 @@
+import { ROLE_RANKING } from "../constants/member-role.js";
 import { AppError } from "../errors/AppError.js";
 import { prisma } from "../lib/prisma.js";
 import type { createChannelInput } from "../types/channel.types.js";
+import { ensureServerAccess } from "./permission.service.js";
 
 export async function createChannel(data: createChannelInput) {
   const { userId, serverId, userInput } = data;
   const { name, type, minimumRole } = userInput;
 
-  const member = await prisma.member.findUnique({
-    where: {
-      userId_serverId: {
-        userId,
-        serverId,
-      },
-    },
-    select: {
-      id: true,
-      role: true,
-    },
-  });
+  const member = await ensureServerAccess(userId, serverId);
 
-  if (!member) throw new AppError(403, "You are not a member of this server");
-
-  const ranking = {
-    MEMBER: 0,
-    MODERATOR: 1,
-    ADMIN: 2,
-    OWNER: 3,
-  };
-
-  if (ranking[member.role] < ranking.MODERATOR)
+  if (ROLE_RANKING[member.role] < ROLE_RANKING["MODERATOR"])
     throw new AppError(403, "You don't have permission to create Channels");
 
   const existingChannel = await prisma.channel.findFirst({
@@ -63,4 +45,20 @@ export async function createChannel(data: createChannelInput) {
   });
 
   return channel;
+}
+
+export async function getChannels(serverId: string, userId: string) {
+  const member = await ensureServerAccess(userId, serverId);
+
+  const channels = await prisma.channel.findMany({
+    where: {
+      serverId,
+    },
+  });
+
+  const accessibleChannels = channels.filter(
+    (channel) => ROLE_RANKING[member.role] >= ROLE_RANKING[channel.minimumRole],
+  );
+
+  return accessibleChannels;
 }
