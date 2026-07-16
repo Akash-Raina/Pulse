@@ -181,3 +181,29 @@ export async function editChannel(data: editChannelInput) {
 
   return updatedChannel;
 }
+
+export async function deleteChannel(channelId: string, userId: string) {
+  //if user is authorized
+  const channel = await prisma.channel.findUnique({
+    where: {
+      id: channelId,
+    },
+    select: {
+      serverId: true,
+    },
+  });
+
+  if (!channel) throw new AppError(404, "Channel not found");
+
+  const member = await ensureServerAccess(userId, channel.serverId, );
+
+  if (ROLE_RANKING[member.role] < ROLE_RANKING.ADMIN)
+    throw new AppError(403, "You don't have permission to delete the channel");
+
+  // delete the channel
+  await prisma.channel.delete({
+    where: {
+      id: channelId
+    }
+  })
+}

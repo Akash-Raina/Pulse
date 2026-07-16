@@ -57,3 +57,15 @@ export const editChannel = asyncHandler(async (req: Request, res: Response) => {
     channel,
   });
 });
+
+export const deleteChannel = asyncHandler(
+  async (req: Request, res: Response) => {
+    const channelId = req.params.channelId as string;
+
+    await channelService.deleteChannel(channelId, req.user.id);
+    res.status(200).json({
+      success: true,
+      message: "Channel deleted Successfully",
+    });
+  },
+);
