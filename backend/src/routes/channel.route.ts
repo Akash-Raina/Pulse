@@ -1,17 +1,18 @@
 import express from "express";
-import { createChannel, getChannels } from "../controller/channel.controller.js";
+import { createChannel, getChannel, getChannels } from "../controller/channel.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import {
   validateChannelSchema,
-  validateServerParams,
+  validateParams,
 } from "../middleware/validation.middleware.js";
+import { channelParamsSchema, serverParamsSchema } from "../schema/params.schema.js";
 
 const router = express.Router();
 
 router.post(
   "/:serverId/channels",
   authMiddleware,
-  validateServerParams,
+  validateParams(serverParamsSchema),
   validateChannelSchema,
   createChannel,
 );
@@ -19,13 +20,16 @@ router.post(
 router.get(
   "/:serverId/channels",
   authMiddleware,
-  validateServerParams,
+  validateParams(serverParamsSchema),
   getChannels
 );
 
-// router.get(
-//   "/channels/:channelId"
-// );
+router.get(
+  "/channels/:channelId",
+  authMiddleware,
+  validateParams(channelParamsSchema),
+  getChannel
+);
 
 // router.patch(
 //   "/channels/:channelId"

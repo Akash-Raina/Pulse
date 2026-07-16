@@ -62,3 +62,29 @@ export async function getChannels(serverId: string, userId: string) {
 
   return accessibleChannels;
 }
+
+export async function getChannel(channelId: string, userId: string) {
+  //check if user is authorized to get the channel and then return channel
+  const channel = await prisma.channel.findUnique({
+    where: {
+      id: channelId,
+    },
+    select: {
+      id: true,
+      name: true,
+      type: true,
+      icon: true,
+      serverId: true,
+      minimumRole: true,
+    },
+  });
+
+  if (!channel) throw new AppError(404, "Channel not found");
+
+  const member = await ensureServerAccess(userId, channel.serverId);
+
+  if (ROLE_RANKING[member.role] < ROLE_RANKING[channel.minimumRole])
+    throw new AppError(403, "You don't have access of this channel");
+
+  return channel;
+}
