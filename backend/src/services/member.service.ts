@@ -1,5 +1,7 @@
+import { ROLE_RANKING } from "../constants/member-role.js";
 import { AppError } from "../errors/AppError.js";
 import { prisma } from "../lib/prisma.js";
+import type { editMemberRoleSchema } from "../schema/member.schema.js";
 import { ensureServerAccess } from "./permission.service.js";
 
 export async function getMembers(serverId: string, userId: string) {
@@ -14,19 +16,67 @@ export async function getMembers(serverId: string, userId: string) {
       id: true,
       role: true,
       joinedAt: true,
-      user:{
-        select:{
+      user: {
+        select: {
           id: true,
           username: true,
           handle: true,
           avatar: true,
-        }
-      }
+        },
+      },
     },
     orderBy: {
-      joinedAt: "asc"
-    }
+      joinedAt: "asc",
+    },
   });
 
   return member;
+}
+
+export async function updateMemberRole(
+  memberId: string,
+  askedRole: editMemberRoleSchema,
+  userId: string,
+) {
+  const member = await prisma.member.findUnique({
+    where: {
+      id: memberId,
+    },
+    select: {
+      id: true,
+      serverId: true,
+      role: true,
+    },
+  });
+
+  if (!member) throw new AppError(404, "Member not found");
+
+  const isMemberAuth = await ensureServerAccess(userId, member.serverId);
+
+  // Prevent changing your own role
+  if (isMemberAuth.id === member.id)
+    throw new AppError(403, "You cannot change your own role");
+
+  // Cannot modify someone with an equal or higher role
+  if (ROLE_RANKING[member.role] >= ROLE_RANKING[isMemberAuth.role])
+    throw new AppError(403, "You don't have permission to modify this member");
+
+  // Only the owner can assign the ADMIN role
+  if (askedRole.role === "ADMIN" && isMemberAuth.role !== "OWNER")
+    throw new AppError(403, "Only the owner can assign the ADMIN role");
+
+  const newRole = await prisma.member.update({
+    where: {
+      id: memberId,
+    },
+    data: {
+      role: askedRole.role,
+    },
+    select: {
+      role: true,
+      serverId: true,
+    },
+  });
+
+  return newRole;
 }

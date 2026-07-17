@@ -12,3 +12,20 @@ export const getMembers = asyncHandler(async (req: Request, res: Response) => {
     members,
   });
 });
+
+export const updateMemberRole = asyncHandler(
+  async (req: Request, res: Response) => {
+    const memberId = req.params.memberId as string;
+    const member = await memberService.updateMemberRole(
+      memberId,
+      req.body,
+      req.user.id,
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Members's role updated successfully",
+      member,
+    });
+  },
+);

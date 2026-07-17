@@ -1,11 +1,11 @@
 import express from "express";
 import { authMiddleware } from "../middleware/auth.middleware.js";
-import { validateParams } from "../middleware/validation.middleware.js";
-import { serverParamsSchema } from "../schema/params.schema.js";
-import { getMembers } from "../controller/member.controller.js";
+import { validateParams, validateUpdateMemberRole } from "../middleware/validation.middleware.js";
+import { memberParamsSchema, serverParamsSchema } from "../schema/params.schema.js";
+import { getMembers, updateMemberRole } from "../controller/member.controller.js";
 
 const router = express.Router();
 
 router.get('/:serverId/members', authMiddleware, validateParams(serverParamsSchema), getMembers)
-
+router.patch('/members/:memberId', authMiddleware, validateParams(memberParamsSchema), validateUpdateMemberRole, updateMemberRole)
 export default router;

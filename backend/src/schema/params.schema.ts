@@ -8,6 +8,10 @@ export const channelParamsSchema = z.object({
   channelId: z.uuid(),
 });
 
+export const memberParamsSchema = z.object({
+  memberId: z.uuid(),
+});
+
 export const serverChannelParamsSchema = z.object({
   serverId: z.uuid(),
   channelId: z.uuid(),
