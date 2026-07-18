@@ -80,3 +80,39 @@ export async function updateMemberRole(
 
   return newRole;
 }
+
+export async function removeMember(memberId: string, userId: string) {
+  const memberToRemove = await prisma.member.findUnique({
+    where: {
+      id: memberId,
+    },
+    select: {
+      id: true,
+      userId: true,
+      serverId: true,
+      role: true,
+    },
+  });
+
+  if (!memberToRemove) throw new AppError(404, "Member not found");
+
+  const member = await ensureServerAccess(userId, memberToRemove.serverId);
+
+  if (member.id === memberToRemove.id)
+    throw new AppError(
+      400,
+      "Use the leave server endpoint to leave the server",
+    );
+
+  if (memberToRemove.role === "OWNER")
+    throw new AppError(403, "The server owner cannot be removed");
+
+  if (ROLE_RANKING[memberToRemove.role] >= ROLE_RANKING[member.role])
+    throw new AppError(403, "You don't have permission to remove this member");
+
+  await prisma.member.delete({
+    where: {
+      id: memberId,
+    },
+  });
+}

@@ -29,3 +29,16 @@ export const updateMemberRole = asyncHandler(
     });
   },
 );
+
+export const removeMember = asyncHandler(
+  async (req: Request, res: Response) => {
+    const memberId = req.params.memberId as string;
+
+    await memberService.removeMember(memberId, req.user.id);
+
+    res.status(200).json({
+      success: true,
+      message: "Member removed successfully",
+    });
+  },
+);
