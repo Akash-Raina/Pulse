@@ -42,3 +42,14 @@ export const removeMember = asyncHandler(
     });
   },
 );
+
+export const leaveServer = asyncHandler(async (req: Request, res: Response) => {
+  const serverId = req.params.serverId as string;
+
+  await memberService.leaveServer(serverId, req.user.id);
+
+  res.status(200).json({
+    success: true,
+    message: "You left the server successfully",
+  });
+});

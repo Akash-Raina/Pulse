@@ -116,3 +116,19 @@ export async function removeMember(memberId: string, userId: string) {
     },
   });
 }
+
+export async function leaveServer(serverId: string, userId: string) {
+  const member = await ensureServerAccess(userId, serverId);
+
+  if (member.role === "OWNER")
+    throw new AppError(
+      403,
+      "You can't leave server without transferring ownership",
+    );
+
+  await prisma.member.delete({
+    where: {
+      id: member.id,
+    },
+  });
+}
