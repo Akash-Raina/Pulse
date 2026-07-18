@@ -24,5 +24,11 @@ export const editServerSchema = z
     "At least one field must be provided",
   );
 
+export const transferOwnerSchema = z.object({
+  memberId: z.uuid(),
+  oldOwnerRole: z.enum(["ADMIN", "MODERATOR", "MEMBER"]),
+});
+
 export type createServerSchema = z.infer<typeof serverSchema>;
 export type editServerSchema = z.infer<typeof editServerSchema>;
+export type transferOwnerSchema = z.infer<typeof transferOwnerSchema>;

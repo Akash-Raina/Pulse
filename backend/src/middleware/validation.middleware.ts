@@ -3,7 +3,8 @@ import { ZodObject } from "zod";
 import { loginSchema, signupSchema } from "../schema/auth.schema.js";
 import { channelSchema, editChannelSchema } from "../schema/channel.schema.js";
 import { MemberRoleSchema } from "../schema/member.schema.js";
-import { editServerSchema, serverSchema } from "../schema/server.schema.js";
+import { editServerSchema, serverSchema, transferOwnerSchema } from "../schema/server.schema.js";
+import { AppError } from "../errors/AppError.js";
 
 function validateUserSignUp(req: Request, _res: Response, next: NextFunction) {
   const result = signupSchema.safeParse(req.body);
@@ -85,6 +86,15 @@ function validateUpdateMemberRole(
   req.body = result.data;
   next();
 }
+
+function validateNewOwner(req: Request, _res: Response, next: NextFunction){
+  const result = transferOwnerSchema.safeParse(req.body);
+
+  if(!result.success) return next(result.error);
+
+  req.body = result.data;
+  next();
+}
 export {
   validateChannelSchema,
   validateEditChannel,
@@ -94,4 +104,5 @@ export {
   validateUpdateMemberRole,
   validateUserLogin,
   validateUserSignUp,
+  validateNewOwner
 };

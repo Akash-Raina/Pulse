@@ -7,6 +7,7 @@ import {
 } from "../controller/member.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import {
+  validateNewOwner,
   validateParams,
   validateUpdateMemberRole,
 } from "../middleware/validation.middleware.js";
@@ -40,6 +41,7 @@ router.delete(
   "/:serverId/leave",
   authMiddleware,
   validateParams(serverParamsSchema),
+  validateNewOwner, 
   leaveServer,
 );
 export default router;

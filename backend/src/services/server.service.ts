@@ -1,6 +1,10 @@
 import { AppError } from "../errors/AppError.js";
 import { prisma } from "../lib/prisma.js";
-import type { EditServerInput } from "../types/server.types.js";
+import type {
+  EditServerInput,
+  transferOwnershipInput,
+} from "../types/server.types.js";
+import { ensureServerAccess } from "./permission.service.js";
 
 export async function createServer(name: string, userId: string) {
   return prisma.$transaction(async (tx) => {
@@ -81,6 +85,70 @@ export async function editServer(data: EditServerInput) {
   });
 
   return updatedServer;
+}
+
+export async function transferOwnership(data: transferOwnershipInput) {
+  const { userId, serverId, userInput } = data;
+  const oldOwner = await ensureServerAccess(userId, serverId);
+
+  if (oldOwner.role !== "OWNER")
+    throw new AppError(403, "You don't have permission to transfer ownership");
+  if (userInput.memberId === oldOwner.id)
+    throw new AppError(400, "You are  already the owner");
+
+  const owner = await prisma.$transaction(async (txn) => {
+    const newOwner = await txn.member.findUnique({
+      where: {
+        id: userInput.memberId,
+      },
+      select: {
+        id: true,
+        userId: true,
+        serverId: true,
+      },
+    });
+
+    if (!newOwner) throw new AppError(404, "Member not found");
+
+    if (newOwner.serverId !== serverId)
+      throw new AppError(403, "Member does not belong to this server");
+
+    const changeOwner = await txn.server.update({
+      where: {
+        id: serverId,
+      },
+      data: {
+        ownerId: newOwner.userId,
+      },
+      select: {
+        owner: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
+      },
+    });
+    await txn.member.update({
+      where: {
+        id: userInput.memberId,
+      },
+      data: {
+        role: "OWNER",
+      },
+    });
+    await txn.member.update({
+      where: {
+        id: oldOwner.id,
+      },
+      data: {
+        role: userInput.oldOwnerRole,
+      },
+    });
+    return changeOwner;
+  });
+
+  return owner;
 }
 
 export async function deleteServer(serverId: string, userId: string) {

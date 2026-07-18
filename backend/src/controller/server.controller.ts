@@ -42,6 +42,23 @@ export const editServer = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
+export const transferOwnership = asyncHandler(
+  async (req: Request, res: Response) => {
+    const serverId = req.params.serverId as string;
+    const newOwner = await serverService.transferOwnership({
+      serverId,
+      userId: req.user.id,
+      userInput: req.body
+  });
+
+    res.status(200).json({
+      success: true,
+      message: "Ownership transferred Successfully",
+      newOwner,
+    });
+  },
+);
+
 export const deleteServer = asyncHandler(
   async (req: Request, res: Response) => {
     const serverId = req.params.serverId as string;
